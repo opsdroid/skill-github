@@ -1,6 +1,6 @@
-# opsdroid skill hello
+# opsdroid skill github
 
-A skill for [opsdroid](https://github.com/opsdroid/opsdroid) to respond to hello and goodbye messages.
+A skill for [opsdroid](https://github.com/opsdroid/opsdroid) to interact with GitHub.
 
 ## Requirements
 
@@ -12,21 +12,13 @@ None.
 
 ## Usage
 
-#### `hello`
+#### `what is the status of <repo>?`
 
-Says hello to the user.
+Finds out the status of a repository.
 
-> user: hello
+> user: what is the status of opsdroid/opsdroid#113?
 >
-> opsdroid: Hi user
-
-#### `goodbye`
-
-Says goodbye to the user.
-
-> user: bye
->
-> opsdroid: Bye user
+> opsdroid: opsdroid/opsdroid#113 has been merged
 
 ## License
 
