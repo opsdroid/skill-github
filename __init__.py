@@ -1,10 +1,55 @@
-from opsdroid.matchers import match_regex
+from opsdroid.matchers import match_regex, match_webhook
+from opsdroid.message import Message
 import logging
 import aiohttp
+import json
+import random
 
 
 _LOGGER = logging.getLogger(__name__)
 _GITHUB_API = "https://api.github.com"
+
+async def get_contributors(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                contributors = await resp.json()
+                return len(contributors)
+    return 0
+
+async def selfmerge_shame(opsdroid, config, payload):
+    message = Message("",
+                      None,
+                      config.get("room", opsdroid.default_connector.default_room),
+                      opsdroid.default_connector)
+    responses = [
+        "Everyone look, {owner} just merged their own PR ({pr})! Naughty!!",
+        "Oooo {owner} just merged their own PR ({pr}). I hope they had a good reason!",
+        "Looks like {owner} has a bad habit of self merging. See {pr} for evidence!",
+        "Someone should gently remind {owner} that self merging like in {pr} is not really ok..."
+    ]
+    if "action" in payload \
+            and payload["action"] == "closed" \
+            and "pull_request" in payload \
+            and "merged_by" in payload["pull_request"]:
+        owner = payload["pull_request"]["user"]["login"]
+        merger = payload["pull_request"]["merged_by"]["login"]
+        contributors = await get_contributors(payload["repository"]["contributors_url"])
+        pr = "{}/{}#{}".format(payload["repository"]["owner"]["login"],
+                               payload["repository"]["name"],
+                               payload["pull_request"]["number"])
+
+        if owner == merger and contributors > config.get("shame-selfmerges-contributor-threshold", 1):
+            await message.respond(random.choice(responses).format(owner=merger, pr=pr))
+
+
+@match_webhook('events')
+async def github_events(opsdroid, config, message):
+    request = await message.post()
+    payload = json.loads(request["payload"])
+    _LOGGER.debug(config.get("secret"))
+    if config.get("shame-selfmerges", True):
+        await selfmerge_shame(opsdroid, config, payload)
 
 
 @match_regex(r'.*status.* (.+/.+#[0-9]+).*')
