@@ -19,7 +19,3 @@ Finds out the status of a repository.
 > user: what is the status of opsdroid/opsdroid#113?
 >
 > opsdroid: opsdroid/opsdroid#113 has been merged
-
-## License
-
-GNU General Public License Version 3 (GPLv3)
